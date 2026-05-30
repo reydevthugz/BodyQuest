@@ -249,7 +249,7 @@ class AdminRepository:
             completed = int((cur.fetchone() or {"total": 0})["total"])
             cur.execute(
                 """
-                SELECT day_number, title, completed_at
+                SELECT day_number, title, completed_at, actual_duration_seconds
                 FROM workout_days
                 WHERE goal_id = %s AND is_completed = TRUE
                 ORDER BY completed_at DESC LIMIT 1

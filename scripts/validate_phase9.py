@@ -30,6 +30,13 @@ def bad(msg: str) -> None:
     print(f"  [FAIL] {msg}")
 
 
+def _complete_day_with_timer(uid: int, gid: int, workout_day_id: int):
+    from services.progress_service import complete_current_day, start_task_timer
+
+    start_task_timer(uid, gid, workout_day_id)
+    return complete_current_day(uid, gid, workout_day_id)
+
+
 class MockPage:
     def __init__(self, route: str = "/login", data: dict | None = None):
         self.route = route
@@ -280,7 +287,7 @@ def test_user_flow() -> None:
 
     days = get_workout_days(gid)
     day1 = days[0]
-    ok1, msg1, done1 = complete_current_day(uid, gid, int(day1["id"]))
+    ok1, msg1, done1 = _complete_day_with_timer(uid, gid, int(day1["id"]))
     if ok1 and not done1:
         ok("complete day 1 unlocks next")
     else:
@@ -302,7 +309,7 @@ def test_user_flow() -> None:
     # Change plan while still active (after day 2)
     repo = GoalRepository()
     day2 = [d for d in get_workout_days(gid) if int(d["day_number"]) == 2][0]
-    ok2, _, _ = complete_current_day(uid, gid, int(day2["id"]))
+    ok2, _, _ = _complete_day_with_timer(uid, gid, int(day2["id"]))
     if ok2:
         ok("complete day 2 before change plan")
     else:
@@ -345,7 +352,7 @@ def test_user_flow() -> None:
         if not current:
             break
         d = current[0]
-        success, message, plan_done = complete_current_day(uid, flex_gid, int(d["id"]))
+        success, message, plan_done = _complete_day_with_timer(uid, flex_gid, int(d["id"]))
         if not success:
             bad(f"complete loop failed: {message}")
             break
@@ -361,6 +368,39 @@ def test_user_flow() -> None:
     else:
         bad("Full Plan Champion missing")
 
+    _cleanup_test_user(email)
+
+
+def test_timer_and_timeline() -> None:
+    from services.auth_service import create_user, login_user
+    from services.plan_service import get_workout_days, start_new_plan
+    from services.progress_service import complete_current_day, select_timeline_day
+    from utils.messages import TASK_LOCKED, TIMER_REQUIRED
+
+    email = f"phase9.timer.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("Timer Tester", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+    uid = int(user["id"])
+    gid = start_new_plan(uid, "General Fitness")
+    days = get_workout_days(gid)
+    day1 = days[0]
+    locked = [d for d in days if int(d["day_number"]) == 3][0]
+    page = MockPage("/user/timeline")
+
+    ok_timer, msg_timer, _ = complete_current_day(uid, gid, int(day1["id"]))
+    if not ok_timer and msg_timer == TIMER_REQUIRED:
+        ok("timer required before complete")
+    else:
+        bad(f"timer required check: {msg_timer}")
+
+    ok_sel, msg_sel, _ = select_timeline_day(uid, gid, int(locked["id"]), page)
+    if not ok_sel and msg_sel == TASK_LOCKED:
+        ok("locked timeline day rejected")
+    else:
+        bad("locked timeline selection allowed")
+
+    _complete_day_with_timer(uid, gid, int(day1["id"]))
     _cleanup_test_user(email)
 
 
@@ -536,7 +576,7 @@ def test_regression_demo() -> None:
         current = [d for d in get_workout_days(flex_gid) if d["is_unlocked"] and not d["is_completed"]]
         if not current:
             break
-        _, _, done = complete_current_day(uid, flex_gid, int(current[0]["id"]))
+        _, _, done = _complete_day_with_timer(uid, flex_gid, int(current[0]["id"]))
     if get_latest_completed_goal(uid):
         ok("latest completed goal available for activity page")
     else:
@@ -598,6 +638,8 @@ def main() -> int:
     test_goal_durations()
     print("\n[7] User flow (signup/plan/complete/change)")
     test_user_flow()
+    print("\n[7b] Timer and timeline")
+    test_timer_and_timeline()
     print("\n[8] Admin stats")
     test_admin_stats()
     print("\n[9] Duplicate signup")

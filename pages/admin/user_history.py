@@ -35,6 +35,13 @@ def build_content(page: ft.Page) -> ft.Control:
                             ft.Text(f"Day {r['day_number']} • {r['title']}", color=TEXT_COLOR, weight=ft.FontWeight.W_600),
                             ft.Text(f"Goal: {r['goal_type']} | Plan status: {str(r['plan_status']).title()}", color=MUTED_TEXT_COLOR, size=12),
                             ft.Text(f"Completed: {format_datetime(r.get('completed_at'))}", color=MUTED_TEXT_COLOR, size=11),
+                            ft.Text(
+                                f"Duration: {max(int(r.get('actual_duration_seconds', 0)) // 60, 1)} min",
+                                color=MUTED_TEXT_COLOR,
+                                size=11,
+                            )
+                            if r.get("actual_duration_seconds")
+                            else ft.Container(),
                         ],
                     ),
                 )

@@ -29,6 +29,27 @@ def _ensure_user_password_columns(cur) -> None:
     _add_column_if_missing(cur, "users", "password_salt", "VARCHAR(255) NULL")
 
 
+def _ensure_workout_day_columns(cur) -> None:
+    _add_column_if_missing(cur, "workout_days", "status", "VARCHAR(50) DEFAULT 'locked'")
+    _add_column_if_missing(cur, "workout_days", "started_at", "DATETIME NULL")
+    _add_column_if_missing(cur, "workout_days", "actual_duration_seconds", "INT DEFAULT 0")
+    _add_column_if_missing(cur, "workout_days", "selected_as_today", "BOOLEAN DEFAULT FALSE")
+    _add_column_if_missing(cur, "progress_logs", "duration_seconds", "INT DEFAULT 0")
+    cur.execute("UPDATE workout_days SET status = 'completed' WHERE is_completed = TRUE")
+    cur.execute(
+        "UPDATE workout_days SET status = 'in_progress' WHERE started_at IS NOT NULL AND is_completed = FALSE"
+    )
+    cur.execute(
+        """
+        UPDATE workout_days SET status = 'current'
+        WHERE is_unlocked = TRUE AND is_completed = FALSE AND (started_at IS NULL OR status != 'in_progress')
+        """
+    )
+    cur.execute(
+        "UPDATE workout_days SET status = 'locked' WHERE is_completed = FALSE AND is_unlocked = FALSE"
+    )
+
+
 def initialize_database() -> None:
     conn = None
     try:
@@ -118,6 +139,7 @@ def initialize_database() -> None:
             )
             """
         )
+        _ensure_workout_day_columns(cur)
         conn.commit()
     except Error as exc:
         if conn:

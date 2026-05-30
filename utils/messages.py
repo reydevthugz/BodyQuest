@@ -7,15 +7,19 @@ SIGNUP_SUCCESS = "Account created successfully. Let's set your fitness goal."
 ACCESS_DENIED = "You do not have permission to access this page."
 GENERIC_ERROR = "Something went wrong while loading your data."
 ACTIVITY_ERROR = "Unable to complete activity right now. Please try again."
-ACTIVITY_LOCKED = "This activity is locked."
-ACTIVITY_ALREADY_DONE = "This activity is already completed."
+ACTIVITY_LOCKED = "This task is locked."
+ACTIVITY_ALREADY_DONE = "This task is already completed."
+TASK_LOCKED = "Complete the current task first to unlock this day."
+TIMER_REQUIRED = "Start your timer before completing this task."
 SESSION_EXPIRED = "Please log in again."
 PLAN_ERROR = "Unable to update your plan right now. Please try again."
 
 # Plans & activity
 PLAN_READY = "Your beginner fitness plan is ready."
 ACTIVITY_UNLOCKED = "Great job! The next activity is now unlocked."
-PLAN_COMPLETED = "You completed your beginner fitness goal!"
+NEXT_DAY_UNLOCKED = "Great job! Day {n} is now unlocked."
+PLAN_COMPLETED = "Congratulations! You completed your fitness goal."
+WEEKLY_CONSISTENCY = "You completed your weekly consistency goal."
 CHANGE_PLAN_SAVED = "Your previous progress was saved to history."
 
 # User empty states

@@ -40,6 +40,7 @@ def generate_plan_days(goal_type: str, duration: int):
                 "estimated_minutes": tpl[5],
                 "is_unlocked": day == 1,
                 "is_completed": False,
+                "status": "current" if day == 1 else "locked",
             }
         )
     return result

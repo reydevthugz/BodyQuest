@@ -19,17 +19,24 @@ class ProgressRepository:
             )
             return cur.fetchone() is not None
 
-    def add_log(self, user_id: int, goal_id: int | None, workout_day_id: int | None, action: str) -> None:
+    def add_log(
+        self,
+        user_id: int,
+        goal_id: int | None,
+        workout_day_id: int | None,
+        action: str,
+        duration_seconds: int = 0,
+    ) -> None:
         if workout_day_id is not None and self.log_exists(user_id, workout_day_id, action):
             return
         with get_connection() as conn:
             cur = conn.cursor(dictionary=True)
             cur.execute(
                 """
-                INSERT INTO progress_logs (user_id, goal_id, workout_day_id, action)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO progress_logs (user_id, goal_id, workout_day_id, action, duration_seconds)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
-                (user_id, goal_id, workout_day_id, action),
+                (user_id, goal_id, workout_day_id, action, int(duration_seconds or 0)),
             )
             conn.commit()
 
@@ -43,6 +50,7 @@ class ProgressRepository:
                     wd.day_number,
                     wd.title,
                     wd.completed_at,
+                    wd.actual_duration_seconds,
                     ug.id AS goal_id,
                     ug.goal_type,
                     ug.status AS plan_status
@@ -65,6 +73,7 @@ class ProgressRepository:
                     wd.day_number,
                     wd.title,
                     wd.completed_at,
+                    wd.actual_duration_seconds,
                     ug.id AS goal_id,
                     ug.goal_type,
                     ug.status AS plan_status
@@ -83,7 +92,8 @@ class ProgressRepository:
             cur = conn.cursor(dictionary=True)
             cur.execute(
                 """
-                SELECT wd.day_number, wd.title, wd.completed_at, ug.goal_type, ug.status AS plan_status
+                SELECT wd.day_number, wd.title, wd.completed_at, wd.actual_duration_seconds,
+                       ug.goal_type, ug.status AS plan_status
                 FROM workout_days wd
                 JOIN user_goals ug ON ug.id = wd.goal_id
                 WHERE ug.user_id = %s AND wd.is_completed = TRUE

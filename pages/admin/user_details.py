@@ -38,6 +38,11 @@ def build_content(page: ft.Page) -> ft.Control:
     last = summary.get("last_completed_activity")
     last_text = (
         f"Day {last['day_number']} • {last['title']} ({format_date(last.get('completed_at'))})"
+        + (
+            f" — {max(int(last.get('actual_duration_seconds', 0)) // 60, 1)} min"
+            if last.get("actual_duration_seconds")
+            else ""
+        )
         if last
         else "No completed activity yet"
     )

@@ -1,5 +1,6 @@
 import flet as ft
 
+from components.cards import status_badge
 from components.theme import MUTED_TEXT_COLOR, PRIMARY_COLOR, PROGRESS_TRACK, SECONDARY_COLOR, TEXT_COLOR
 from components.ui import glass_card, neon_button, soft_button, stat_tile
 from utils.messages import NO_ACTIVE_PLAN, NO_ACHIEVEMENTS, NO_WORKOUT_HISTORY
@@ -42,21 +43,33 @@ def dashboard_view(page: ft.Page) -> ft.View:
     recent_achievements = get_recent_user_achievements(user_id, 3)
     recent_history = get_recent_workout_history(user_id, 5)
 
+    current_status = dash.get("current_day_status")
+    status_controls = []
+    if current_day and current_status:
+        status_controls.append(status_badge(current_status.replace("_", " ").title(), "cyan" if current_status == "current" else "aqua"))
+
     top_card = glass_card(
         ft.Column(
             spacing=10,
             controls=[
                 ft.Text(f"Welcome back, {user_name.split(' ')[0]}!", size=30, color=TEXT_COLOR, weight=ft.FontWeight.BOLD),
                 ft.Text(f"Current Goal: {active_goal['goal_type']} ({total} days)", color=MUTED_TEXT_COLOR),
-                ft.Text(
-                    f"Today's Activity: Day {current_day['day_number']} - {current_day['title']}" if current_day else "All activities completed.",
-                    color=SECONDARY_COLOR,
+                ft.Row(
+                    spacing=8,
+                    controls=[
+                        ft.Text(
+                            f"Today's Activity: Day {current_day['day_number']} - {current_day['title']}" if current_day else "All activities completed.",
+                            color=SECONDARY_COLOR,
+                        ),
+                        *status_controls,
+                    ],
                 ),
                 ft.ProgressBar(value=max(min(percent / 100, 1), 0), color=PRIMARY_COLOR, bgcolor=PROGRESS_TRACK, height=10),
                 ft.Row(
                     spacing=12,
                     controls=[
                         neon_button("Continue Activity", ft.Icons.PLAY_CIRCLE_FILL_ROUNDED, lambda _: page.go("/user/activity")),
+                        soft_button("Plan Timeline", ft.Icons.TIMELINE, lambda _: page.go("/user/timeline")),
                         soft_button("Change Plan", ft.Icons.SYNC, lambda _: show_change_plan_dialog(page)),
                     ],
                 ),
