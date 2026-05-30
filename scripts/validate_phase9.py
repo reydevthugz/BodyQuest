@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from config.settings import DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, LEGACY_ADMIN_EMAIL
+
 PASS: list[str] = []
 FAIL: list[str] = []
 
@@ -128,7 +130,7 @@ def test_database() -> None:
     created = seed_default_admin()
     ok(f"seed_default_admin (created={created})")
 
-    admin = login_user("admin@gymbro.com", "admin123")
+    admin = login_user(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
     if admin and admin.get("role") == "admin":
         ok("admin login")
     else:
@@ -178,7 +180,7 @@ def test_route_guard() -> None:
     else:
         bad("user admin guard")
 
-    set_current_user(page, {"id": 99, "role": "admin", "full_name": "A", "email": "admin@gymbro.com"})
+    set_current_user(page, {"id": 99, "role": "admin", "full_name": "A", "email": DEFAULT_ADMIN_EMAIL})
     if route_guard(page, "/user/dashboard") == "/admin/dashboard":
         ok("admin /user/dashboard -> /admin/dashboard")
     else:
@@ -367,7 +369,8 @@ def test_admin_stats() -> None:
     from services.auth_service import login_user
 
     users = get_all_users()
-    if all(u.get("email") != "admin@gymbro.com" for u in users):
+    admin_emails = {DEFAULT_ADMIN_EMAIL, LEGACY_ADMIN_EMAIL}
+    if all(u.get("email") not in admin_emails for u in users):
         ok("admin not listed in user management")
     else:
         bad("admin appears in user list")
@@ -395,7 +398,7 @@ def test_admin_stats() -> None:
     except Exception as exc:
         bad(f"reports summary: {exc}")
 
-    admin = login_user("admin@gymbro.com", "admin123")
+    admin = login_user(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
     if admin:
         ok("admin credentials still valid")
     else:
@@ -470,7 +473,7 @@ def test_regression_demo() -> None:
 
     # Admin login routing
     clear_current_user(page)
-    admin_login = handle_login(page, "admin@gymbro.com", "admin123")
+    admin_login = handle_login(page, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
     if admin_login["success"] and admin_login["data"]["route"] == "/admin/dashboard":
         ok("admin login -> /admin/dashboard")
     else:
@@ -540,7 +543,7 @@ def test_regression_demo() -> None:
         bad("latest completed goal missing")
 
     # All admin routes resolve
-    handle_login(page, "admin@gymbro.com", "admin123")
+    handle_login(page, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
     for route in sorted(ADMIN_ROUTES):
         page.route = route
         safe = route_guard(page, route)

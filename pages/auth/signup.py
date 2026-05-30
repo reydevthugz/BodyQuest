@@ -49,4 +49,4 @@ def signup_view(page: ft.Page) -> ft.View:
             link_button("Back to Home", lambda _: page.go("/"), muted=True),
         ],
     )
-    return auth_shell(page, "Create Account", "Build your beginner fitness plan.", form)
+    return auth_shell(page, "Join BodyQuest", "Build your beginner fitness plan.", form)

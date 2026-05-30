@@ -1,6 +1,8 @@
-# GymBro
+# BodyQuest
 
-**GymBro** is a beginner-focused fitness desktop application built with **Python Flet** and **Laragon MySQL**. Users sign up, choose a fitness goal, complete daily workouts with sequential unlocking, and earn achievements. Administrators monitor real user progress through a separate admin dashboard.
+**Project Name: BodyQuest**
+
+**BodyQuest** is a beginner-focused fitness desktop application built with **Python Flet** and **Laragon MySQL**. Users sign up, choose a fitness goal, complete daily workouts with sequential unlocking, and earn achievements. Administrators monitor real user progress through a separate admin dashboard.
 
 ---
 
@@ -68,7 +70,7 @@ See **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** for the full folder tree an
 ## Folder Structure (Summary)
 
 ```
-GYMBRO/
+BodyQuest/
 ├── main.py, app.py, router.py
 ├── config/, database/, models/
 ├── repositories/, requests/, controllers/, services/
@@ -79,6 +81,8 @@ GYMBRO/
 ---
 
 ## Database Setup
+
+> **Database name remains:** `gymbro`
 
 | Setting | Value |
 |---------|--------|
@@ -98,18 +102,20 @@ Created automatically on first run via `database/migrations.py` (no data loss on
 
 | Field | Value |
 |-------|--------|
-| Email | `admin@gymbro.com` |
+| Email | `admin@bodyquest.com` |
 | Password | `admin123` |
 | Role | `admin` |
 
 If this account already exists, startup will **not** create a duplicate.
+
+**Migration note:** If you previously used `admin@gymbro.com`, that account still works. Both admin emails can log in during migration.
 
 ---
 
 ## Installation & Run
 
 ```bash
-cd C:\laragon\www\GYMBRO
+cd C:\laragon\www\BodyQuest
 pip install -r requirements.txt
 py main.py
 ```
@@ -193,7 +199,7 @@ Validate: `py scripts\validate_phase8_qa.py`
 |-------|----------|
 | MySQL connection error | Start MySQL in Laragon |
 | Database missing | Run `py main.py` once |
-| Admin login fails | Use `admin@gymbro.com` / `admin123` |
+| Admin login fails | Use `admin@bodyquest.com` / `admin123` (or legacy `admin@gymbro.com` / `admin123`) |
 | Empty admin lists | Normal before any user signs up |
 | Import errors | Run from project root |
 | Module not found | `pip install -r requirements.txt` |

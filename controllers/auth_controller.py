@@ -17,7 +17,7 @@ def handle_login(page: ft.Page, email: str, password: str) -> dict:
     try:
         user = auth_service.login_user(validation["email"], password)
     except Exception as exc:
-        print(f"[GYMBRO] handle_login error: {exc}")
+        print(f"[BODYQUEST] handle_login error: {exc}")
         return error_response(LOGIN_INVALID)
 
     if not user:
@@ -50,7 +50,7 @@ def handle_signup(page: ft.Page, full_name: str, email: str, password: str, conf
     try:
         user = auth_service.login_user(validation["email"], validation["password"])
     except Exception as exc:
-        print(f"[GYMBRO] handle_signup login error: {exc}")
+        print(f"[BODYQUEST] handle_signup login error: {exc}")
         return error_response(GENERIC_ERROR)
 
     if not user:

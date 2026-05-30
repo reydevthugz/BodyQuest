@@ -68,7 +68,7 @@ def main() -> None:
     if not user or user.get("role") != "admin":
         ISSUES.append("Admin login failed")
     else:
-        PASS.append("admin@gymbro.com / admin123 login OK")
+        PASS.append(f"{DEFAULT_ADMIN_EMAIL} / {DEFAULT_ADMIN_PASSWORD} login OK")
 
     repo = UserRepository()
     row = repo.find_by_email(DEFAULT_ADMIN_EMAIL)

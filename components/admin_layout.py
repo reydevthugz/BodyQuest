@@ -107,7 +107,7 @@ def _admin_sidebar(page: ft.Page, section: str) -> ft.Container:
                 ft.Row(
                     controls=[
                         ft.Icon(ft.Icons.FITNESS_CENTER, color=PRIMARY_CYAN),
-                        ft.Text("GYMBRO", color=TEXT_CYAN, size=22, weight=ft.FontWeight.BOLD),
+                        ft.Text("BODYQUEST", color=TEXT_CYAN, size=22, weight=ft.FontWeight.BOLD),
                     ]
                 ),
                 ft.Container(

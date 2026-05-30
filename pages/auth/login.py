@@ -46,4 +46,4 @@ def login_view(page: ft.Page) -> ft.View:
             link_button("Back to Home", lambda _: page.go("/"), muted=True),
         ],
     )
-    return auth_shell(page, "Welcome back!", "Continue your progress today.", form)
+    return auth_shell(page, "Welcome to BodyQuest", "Continue your progress today.", form)

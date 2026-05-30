@@ -21,7 +21,7 @@ DOCS = [
 
 def main() -> int:
     ok = True
-    print("=== GymBro Final Submission Check ===\n")
+    print("=== BodyQuest Final Submission Check ===\n")
 
     # Documentation
     print("[Documentation]")
@@ -41,6 +41,7 @@ def main() -> int:
     # MySQL only + startup
     print("\n[MySQL / Startup]")
     try:
+        from config.settings import DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, LEGACY_ADMIN_EMAIL
         from database.connection import health_check, get_connection
         from database.migrations import initialize_database
         from database.seeders import seed_default_admin
@@ -62,16 +63,20 @@ def main() -> int:
             users = int(cur.fetchone()["c"])
 
         admin_emails = [a["email"] for a in admins]
-        one_admin = len(admins) == 1 and "admin@gymbro.com" in admin_emails
-        print(f"  {'OK' if one_admin else 'FAIL'}  exactly one admin: {admin_emails}")
+        has_default = DEFAULT_ADMIN_EMAIL in admin_emails
+        print(f"  {'OK' if has_default else 'FAIL'}  default admin present: {admin_emails}")
         print(f"  INFO  user accounts in DB: {users} (signup only, not auto-seeded)")
-        ok = ok and one_admin
+        ok = ok and has_default
 
         from services.auth_service import login_user
 
-        admin = login_user("admin@gymbro.com", "admin123")
-        print(f"  {'OK' if admin else 'FAIL'}  admin login")
+        admin = login_user(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
+        print(f"  {'OK' if admin else 'FAIL'}  admin login ({DEFAULT_ADMIN_EMAIL})")
         ok = ok and bool(admin)
+
+        if LEGACY_ADMIN_EMAIL in admin_emails:
+            legacy = login_user(LEGACY_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
+            print(f"  {'OK' if legacy else 'INFO'}  legacy admin login ({LEGACY_ADMIN_EMAIL})")
 
         import main  # noqa: F401
         import app  # noqa: F401

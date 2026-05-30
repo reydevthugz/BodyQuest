@@ -106,7 +106,7 @@ def _user_sidebar(page: ft.Page, section: str, profile_subtitle: str) -> ft.Cont
                 ft.Row(
                     controls=[
                         ft.Icon(ft.Icons.FITNESS_CENTER, color=PRIMARY_CYAN),
-                        ft.Text("GYMBRO", color=TEXT_CYAN, weight=ft.FontWeight.BOLD, size=22),
+                        ft.Text("BODYQUEST", color=TEXT_CYAN, weight=ft.FontWeight.BOLD, size=22),
                     ]
                 ),
                 ft.Container(

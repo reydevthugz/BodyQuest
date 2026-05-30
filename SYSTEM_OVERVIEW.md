@@ -1,16 +1,18 @@
-# GymBro — System Overview
+# BodyQuest — System Overview
+
+**Project Name: BodyQuest**
 
 ## Project Title
 
-**GymBro** — A Beginner Fitness Plan Tracker (Python Flet + MySQL)
+**BodyQuest** — A Beginner Fitness Plan Tracker (Python Flet + MySQL)
 
 ## Short Description
 
-GymBro is a desktop fitness application that helps beginners choose a fitness goal, follow a structured daily workout plan, unlock activities day by day, track progress, and earn achievements. A separate admin interface monitors registered users, plans, and system-wide analytics.
+BodyQuest is a desktop fitness application that helps beginners choose a fitness goal, follow a structured daily workout plan, unlock activities day by day, track progress, and earn achievements. A separate admin interface monitors registered users, plans, and system-wide analytics.
 
 ## Problem Statement
 
-Many beginners struggle to stay consistent with fitness because they lack a simple, guided plan and visible progress. Generic apps can feel overwhelming. GymBro focuses on **beginner-friendly**, goal-based daily plans with clear unlock rules and motivation through achievements.
+Many beginners struggle to stay consistent with fitness because they lack a simple, guided plan and visible progress. Generic apps can feel overwhelming. BodyQuest focuses on **beginner-friendly**, goal-based daily plans with clear unlock rules and motivation through achievements.
 
 ## System Objective
 
@@ -32,10 +34,12 @@ Many beginners struggle to stay consistent with fitness because they lack a simp
 
 | Aspect | Description |
 |--------|-------------|
-| Who | Default admin (`admin@gymbro.com`) — seeded once at startup if missing |
+| Who | Default admin (`admin@bodyquest.com`) — seeded once at startup if missing |
 | Access | `/admin/*` routes only |
 | Capabilities | Dashboard, user management (search/filter), per-user details/achievements/history, all achievements, leaderboard, reports, profile, logout |
 | Data scope | **System-wide** — all users with `role = user` (admin is never counted as a normal user) |
+
+**Migration note:** Legacy `admin@gymbro.com` still works if it existed before the rebrand.
 
 ## Main User Features
 
@@ -75,6 +79,8 @@ Many beginners struggle to stay consistent with fitness because they lack a simp
 **Not used:** SQLite, React, Tailwind, `client_storage`, `flet_core`, Node.js frontend.
 
 ## Database Overview
+
+> **Database name remains:** `gymbro`
 
 | Table | Purpose |
 |-------|---------|

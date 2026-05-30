@@ -57,7 +57,7 @@ def create_user(full_name: str, email: str, password: str, role: str = "user") -
     try:
         _user_repo.create_user(full_name, email, password, role)
     except Exception as exc:
-        print(f"[GYMBRO] create_user error: {exc}")
+        print(f"[BODYQUEST] create_user error: {exc}")
         from utils.messages import GENERIC_ERROR
 
         return False, GENERIC_ERROR

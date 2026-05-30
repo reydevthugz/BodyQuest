@@ -1,4 +1,6 @@
-# GymBro — Defense Guide
+# BodyQuest — Defense Guide
+
+**Project Name: BodyQuest**
 
 Short, defendable answers for instructor questions during project presentation.
 
@@ -6,7 +8,7 @@ Short, defendable answers for instructor questions during project presentation.
 
 ## General
 
-**What is GymBro?**  
+**What is BodyQuest?**  
 A beginner-focused fitness desktop app built with Python Flet and MySQL. Users follow daily workout plans; admins monitor real user data.
 
 **What problem does it solve?**  
@@ -16,7 +18,7 @@ Beginners need a simple, structured plan with visible progress—not an overwhel
 Beginners who want guided daily workouts and accountability through unlock rules and achievements.
 
 **Why is it beginner-focused?**  
-All plans use “Beginner” difficulty, modest daily time (about 20–35 minutes), and sequential day unlocking so users cannot skip ahead.
+All plans use "Beginner" difficulty, modest daily time (about 20–35 minutes), and sequential day unlocking so users cannot skip ahead.
 
 ---
 
@@ -66,10 +68,13 @@ Easier testing, clearer defense explanation, and changes to SQL or UI do not bre
 User enters email/password → `auth_request` validates → `auth_service` verifies hash → session stores safe user fields → redirect by role and active plan.
 
 **How does admin login work?**  
-Same login page. Default admin `admin@gymbro.com` / `admin123` → `role = admin` → `/admin/dashboard`.
+Same login page. Default admin `admin@bodyquest.com` / `admin123` → `role = admin` → `/admin/dashboard`.
 
 **What is the default admin account?**  
-`admin@gymbro.com` / `admin123` — created once by `database/seeders.py` if missing. No demo users are seeded.
+`admin@bodyquest.com` / `admin123` — created once by `database/seeders.py` if missing. No demo users are seeded.
+
+**Legacy admin during migration:**  
+`admin@gymbro.com` / `admin123` still works if that account existed before the rebrand.
 
 **How are user and admin routes separated?**  
 `router.route_guard` redirects wrong roles; layouts call `require_user` / `require_admin`; admin pages never show user workout flow as home.

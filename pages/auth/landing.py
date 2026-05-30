@@ -79,7 +79,7 @@ def landing_view(page: ft.Page) -> ft.View:
                                                     weight=ft.FontWeight.W_700,
                                                 ),
                                                 ft.Text(
-                                                    "GymBro helps beginners choose a fitness goal, follow a structured daily plan, "
+                                                    "BodyQuest helps beginners choose a fitness goal, follow a structured daily plan, "
                                                     "unlock activities one day at a time, and earn achievements — with a separate admin "
                                                     "dashboard for real-time monitoring.",
                                                     size=15,

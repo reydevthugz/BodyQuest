@@ -1,4 +1,4 @@
-"""Centralized Cyan & Black design system for GymBro."""
+"""Centralized Cyan & Black design system for BodyQuest."""
 import flet as ft
 
 # ── Core palette ─────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ def brand_header(size: int = 28) -> ft.Row:
     return ft.Row(
         controls=[
             ft.Icon(ft.Icons.FITNESS_CENTER, color=PRIMARY_CYAN, size=size),
-            ft.Text("GYMBRO", color=TEXT_COLOR, size=size, weight=ft.FontWeight.BOLD),
+            ft.Text("BODYQUEST", color=TEXT_COLOR, size=size, weight=ft.FontWeight.BOLD),
             ft.Icon(ft.Icons.BOLT, color=NEON_CYAN, size=max(size // 2, 16)),
         ],
     )

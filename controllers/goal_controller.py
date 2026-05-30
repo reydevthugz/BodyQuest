@@ -38,7 +38,7 @@ def handle_start_plan(page: ft.Page) -> dict:
         set_session_value(page, "selected_goal", "")
         return success_response(PLAN_READY, {"route": "/user/dashboard"})
     except Exception as exc:
-        print(f"[GYMBRO] handle_start_plan error: {exc}")
+        print(f"[BODYQUEST] handle_start_plan error: {exc}")
         return error_response(PLAN_ERROR)
 
 

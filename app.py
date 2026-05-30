@@ -44,7 +44,7 @@ def main(page: ft.Page) -> None:
             if view is None:
                 raise RuntimeError(f"Page builder returned no view for route: {safe_route}")
         except Exception as exc:
-            print(f"[GYMBRO] Route error ({safe_route}): {exc}")
+            print(f"[BODYQUEST] Route error ({safe_route}): {exc}")
             traceback.print_exc()
             from pages.auth.error import error_view
 

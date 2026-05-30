@@ -1,9 +1,11 @@
-# GymBro — Project Structure
+# BodyQuest — Project Structure
+
+**Project Name: BodyQuest**
 
 ## Folder Tree
 
 ```
-GYMBRO/
+BodyQuest/
 ├── main.py                      # Entry: DB health, migrations, admin seed, launch Flet
 ├── app.py                       # Flet page setup, route change handler
 ├── router.py                    # Route guard + view resolver
@@ -171,8 +173,8 @@ repositories → database.connection
 
 ## MVC + Request + Service + Repository
 
-| Layer | Analogy | GymBro example |
-|-------|---------|----------------|
+| Layer | Analogy | BodyQuest example |
+|-------|---------|-------------------|
 | **Page (View)** | Screen | `pages/user/activity.py` |
 | **Controller** | Event handler | `handle_complete_activity()` |
 | **Request** | Form validator | `validate_signup()` |
@@ -181,3 +183,7 @@ repositories → database.connection
 | **Database** | Infrastructure | `get_connection()`, migrations |
 
 This structure keeps the project **defense-ready**: each question maps to a clear layer.
+
+## Database Note
+
+> **Database name remains:** `gymbro` (configured in `config/settings.py` as `DB_NAME`).

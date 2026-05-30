@@ -1,4 +1,6 @@
-# GymBro — Installation Guide
+# BodyQuest — Installation Guide
+
+**Project Name: BodyQuest**
 
 ## Required Software
 
@@ -30,6 +32,8 @@ Optional: **phpMyAdmin** (included with Laragon) to inspect the `gymbro` databas
 
 ## Step 3: Database (gymbro)
 
+> **Database name remains:** `gymbro`
+
 You do **not** need to create tables manually.
 
 1. Optional: open **phpMyAdmin** from Laragon menu → **Database** → check if `gymbro` exists.
@@ -55,7 +59,7 @@ You do **not** need to create tables manually.
 Open a terminal in the project folder:
 
 ```bash
-cd C:\laragon\www\GYMBRO
+cd C:\laragon\www\BodyQuest
 pip install -r requirements.txt
 ```
 
@@ -77,14 +81,14 @@ py main.py
 Expected console output:
 
 ```
-[GYMBRO] Initializing MySQL database...
-[GYMBRO] MySQL health check passed (SELECT 1)
-[GYMBRO] Database ready: gymbro
-[GYMBRO] Default admin already exists (no duplicate created)
-[GYMBRO] Launching app...
+[BODYQUEST] Initializing MySQL database...
+[BODYQUEST] MySQL health check passed (SELECT 1)
+[BODYQUEST] Database ready: gymbro
+[BODYQUEST] Default admin already exists (no duplicate created)
+[BODYQUEST] Launching app...
 ```
 
-The GymBro window should open on the **Login** page.
+The BodyQuest window should open on the **Login** page.
 
 ---
 
@@ -92,10 +96,12 @@ The GymBro window should open on the **Login** page.
 
 | Field | Value |
 |-------|--------|
-| Email | `admin@gymbro.com` |
+| Email | `admin@bodyquest.com` |
 | Password | `admin123` |
 
 **No demo user accounts** are created. Register normal users via **Sign up**.
+
+**Migration note:** If you previously used `admin@gymbro.com`, that account still works alongside the new default admin.
 
 ---
 
@@ -119,12 +125,13 @@ The GymBro window should open on the **Login** page.
 pip install -r requirements.txt
 ```
 
-Run from project root: `C:\laragon\www\GYMBRO`.
+Run from project root: `C:\laragon\www\BodyQuest`.
 
 ### Invalid admin login
 
-**Fix:** Use exactly `admin@gymbro.com` / `admin123`.  
-Check `users` table in phpMyAdmin — one row with `role = admin`.
+**Fix:** Use exactly `admin@bodyquest.com` / `admin123`.  
+Legacy: `admin@gymbro.com` / `admin123` if that account existed before rebrand.  
+Check `users` table in phpMyAdmin — row(s) with `role = admin`.
 
 ### Port conflict (3306)
 
@@ -140,7 +147,7 @@ Check `users` table in phpMyAdmin — one row with `role = admin`.
 
 ### Import errors
 
-**Fix:** Run commands from `GYMBRO` root, not from a subfolder.
+**Fix:** Run commands from `BodyQuest` root, not from a subfolder.
 
 ---
 

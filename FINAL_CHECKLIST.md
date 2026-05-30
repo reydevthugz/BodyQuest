@@ -1,4 +1,6 @@
-# GymBro — Final Submission Checklist
+# BodyQuest — Final Submission Checklist
+
+**Project Name: BodyQuest**
 
 Use this before submitting the project or presenting your defense.
 
@@ -9,19 +11,21 @@ Use this before submitting the project or presenting your defense.
 - [ ] Laragon installed
 - [ ] MySQL started (green in Laragon)
 - [ ] Python 3 installed (`py --version`)
-- [ ] Terminal opened at `C:\laragon\www\GYMBRO`
+- [ ] Terminal opened at `C:\laragon\www\BodyQuest`
 - [ ] `pip install -r requirements.txt` completed
 
 ---
 
 ## Database Checklist
 
+> **Database name remains:** `gymbro`
+
 - [ ] Database name: `gymbro`
 - [ ] Host: `localhost`, port `3306`
 - [ ] User: `root`, password: empty
 - [ ] `py main.py` creates tables if missing
 - [ ] No tables dropped on restart
-- [ ] Default admin exists: `admin@gymbro.com`
+- [ ] Default admin exists: `admin@bodyquest.com`
 - [ ] No demo users seeded automatically
 - [ ] Password hashing columns present (`password_hash`, `password_salt`)
 
@@ -58,7 +62,7 @@ Use this before submitting the project or presenting your defense.
 
 ## Admin Flow Checklist
 
-- [ ] Login `admin@gymbro.com` / `admin123`
+- [ ] Login `admin@bodyquest.com` / `admin123`
 - [ ] Admin dashboard loads (empty state OK if no users)
 - [ ] User management list (admin not in list)
 - [ ] Search / filter users
@@ -86,7 +90,7 @@ Use this before submitting the project or presenting your defense.
 
 ## UI Checklist
 
-- [ ] Dark theme with neon green / blue accents
+- [ ] Dark theme with cyan and black accents
 - [ ] Glass-style cards visible
 - [ ] Empty states on lists with no data
 - [ ] Error messages user-friendly (no raw SQL)
@@ -94,6 +98,8 @@ Use this before submitting the project or presenting your defense.
 - [ ] Snackbars on signup / start plan
 - [ ] No blank pages on valid routes
 - [ ] 404 page for unknown routes
+- [ ] Window title shows **BodyQuest**
+- [ ] UI headers show **BODYQUEST**
 
 ---
 
@@ -147,5 +153,6 @@ pip install -r requirements.txt
 py main.py
 ```
 
-**Default admin:** `admin@gymbro.com` / `admin123`  
+**Default admin:** `admin@bodyquest.com` / `admin123`  
+**Legacy admin (if existed):** `admin@gymbro.com` / `admin123`  
 **Users:** Create only via Signup during demo.

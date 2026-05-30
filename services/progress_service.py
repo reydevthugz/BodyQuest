@@ -74,7 +74,7 @@ def complete_current_day(user_id: int, goal_id: int, workout_day_id: int):
         check_and_award_achievements(user_id, goal_id)
         return True, ACTIVITY_UNLOCKED, False
     except Exception as exc:
-        print(f"[GYMBRO] complete_current_day error: {exc}")
+        print(f"[BODYQUEST] complete_current_day error: {exc}")
         return False, ACTIVITY_ERROR, False
 
 

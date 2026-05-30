@@ -1,4 +1,6 @@
-# GymBro — Demo Checklist
+# BodyQuest — Demo Checklist
+
+**Project Name: BodyQuest**
 
 Use this checklist before and during your presentation.
 
@@ -11,7 +13,7 @@ Use this checklist before and during your presentation.
 - [ ] Start **Laragon**
 - [ ] Start **MySQL** (green in Laragon)
 - [ ] Optional: open **phpMyAdmin** → confirm database **`gymbro`** exists
-- [ ] Open terminal in project folder: `C:\laragon\www\GYMBRO`
+- [ ] Open terminal in project folder: `C:\laragon\www\BodyQuest`
 - [ ] Install dependencies (if needed):
   ```bash
   pip install -r requirements.txt
@@ -25,8 +27,10 @@ Use this checklist before and during your presentation.
 
 **Default admin only:**
 
-- Email: `admin@gymbro.com`
+- Email: `admin@bodyquest.com`
 - Password: `admin123`
+
+**Legacy admin (if existed before rebrand):** `admin@gymbro.com` / `admin123`
 
 ---
 
@@ -52,7 +56,7 @@ Use this checklist before and during your presentation.
 
 ## Section 3: Admin Demo Flow
 
-1. [ ] Login as admin: `admin@gymbro.com` / `admin123`
+1. [ ] Login as admin: `admin@bodyquest.com` / `admin123`
 2. [ ] Redirect to **Admin Dashboard** (`/admin/dashboard`)
 3. [ ] If no users yet: friendly **empty states** (no crash)
 4. [ ] After user demo: refresh stats on dashboard
@@ -105,7 +109,7 @@ The system uses only a default admin account. Normal users are created through t
 | Check | Expected |
 |-------|----------|
 | `py main.py` | App window opens |
-| Admin seed | One admin only; no sample users |
+| Admin seed | Default admin only; no sample users |
 | Signup | Creates `role = user` in MySQL |
 | User routes | All `/user/*` pages load |
 | Admin routes | All `/admin/*` pages load |

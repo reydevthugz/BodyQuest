@@ -67,6 +67,6 @@ def resolve_view(page, route: str):
             return admin_view(page)
         return not_found_view(page)
     except Exception as exc:
-        print(f"[GYMBRO] resolve_view failed ({route}): {exc}")
+        print(f"[BODYQUEST] resolve_view failed ({route}): {exc}")
         traceback.print_exc()
         return error_view(page, str(exc))
