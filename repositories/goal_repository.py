@@ -7,8 +7,6 @@ from database.connection import get_connection
 
 class GoalRepository:
     def create_goal(self, user_id: int, goal_type: str, duration: int) -> int:
-        # Prevent duplicate active plans for the same user.
-        self.mark_active_goal_replaced(int(user_id))
         with get_connection() as conn:
             cur = conn.cursor(dictionary=True)
             cur.execute(

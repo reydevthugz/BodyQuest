@@ -6,7 +6,7 @@ from requests import progress_request
 from services import plan_service, progress_service
 from services.session_service import get_current_user_id
 from utils.auth_guard import require_user
-from utils.messages import ACCESS_DENIED, SESSION_EXPIRED
+from utils.messages import ACCESS_DENIED, SESSION_EXPIRED, TASK_STARTED
 from utils.response import error_response, success_response
 
 
@@ -27,6 +27,57 @@ def handle_select_timeline_day(page: ft.Page, goal_id: int, workout_day_id: int)
     return success_response(message or "Opening activity.", {"route": "/user/activity", "mode": mode})
 
 
+def handle_continue_timeline_task(page: ft.Page, goal_id: int, workout_day_id: int) -> dict:
+    if not require_user(page):
+        return error_response(ACCESS_DENIED)
+    user_id = get_current_user_id(page)
+    if not user_id:
+        return error_response(SESSION_EXPIRED)
+
+    validation = progress_request.validate_select_day(user_id, goal_id, workout_day_id)
+    if not validation["valid"]:
+        return error_response(validation["errors"][0], validation["errors"])
+
+    ok, message = progress_service.continue_timeline_task(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return error_response(message)
+    return success_response(message or "Opening activity.", {"route": "/user/activity"})
+
+
+def handle_resume_timeline_task(page: ft.Page, goal_id: int, workout_day_id: int) -> dict:
+    if not require_user(page):
+        return error_response(ACCESS_DENIED)
+    user_id = get_current_user_id(page)
+    if not user_id:
+        return error_response(SESSION_EXPIRED)
+
+    validation = progress_request.validate_select_day(user_id, goal_id, workout_day_id)
+    if not validation["valid"]:
+        return error_response(validation["errors"][0], validation["errors"])
+
+    ok, message = progress_service.resume_timeline_task(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return error_response(message)
+    return success_response(message or TASK_STARTED, {"route": "/user/activity"})
+
+
+def handle_start_timeline_task(page: ft.Page, goal_id: int, workout_day_id: int) -> dict:
+    if not require_user(page):
+        return error_response(ACCESS_DENIED)
+    user_id = get_current_user_id(page)
+    if not user_id:
+        return error_response(SESSION_EXPIRED)
+
+    validation = progress_request.validate_select_day(user_id, goal_id, workout_day_id)
+    if not validation["valid"]:
+        return error_response(validation["errors"][0], validation["errors"])
+
+    ok, message = progress_service.start_timeline_task(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return error_response(message)
+    return success_response(message or TASK_STARTED, {"route": "/user/activity"})
+
+
 def handle_start_timer(page: ft.Page, goal_id: int, workout_day_id: int) -> dict:
     if not require_user(page):
         return error_response(ACCESS_DENIED)
@@ -41,7 +92,24 @@ def handle_start_timer(page: ft.Page, goal_id: int, workout_day_id: int) -> dict
     ok, message = progress_service.start_task_timer(user_id, goal_id, workout_day_id)
     if not ok:
         return error_response(message)
-    return success_response("Timer started.", {"started": True})
+    return success_response("Timer started.", {"started": True, "message": TASK_STARTED})
+
+
+def handle_stop_task(page: ft.Page, goal_id: int, workout_day_id: int) -> dict:
+    if not require_user(page):
+        return error_response(ACCESS_DENIED)
+    user_id = get_current_user_id(page)
+    if not user_id:
+        return error_response(SESSION_EXPIRED)
+
+    validation = progress_request.validate_start_timer(user_id, goal_id, workout_day_id)
+    if not validation["valid"]:
+        return error_response(validation["errors"][0], validation["errors"])
+
+    ok, message = progress_service.stop_task(user_id, goal_id, workout_day_id)
+    if not ok:
+        return error_response(message)
+    return success_response(message, {"stopped": True})
 
 
 def handle_complete_activity(
@@ -66,8 +134,14 @@ def handle_complete_activity(
         return error_response(message)
 
     progress_service.clear_activity_session(page)
-    route = "/user/achievements" if finished else "/user/activity"
+    route = "/user/dashboard"
     return success_response(message, {"finished": finished, "route": route})
+
+
+def get_workout_history_data(user_id: int) -> dict:
+    if not user_id:
+        return {"history": []}
+    return {"history": progress_service.get_user_workout_history(user_id)}
 
 
 def get_dashboard_data(user_id: int) -> dict:

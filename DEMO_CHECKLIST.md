@@ -52,6 +52,21 @@ Use this checklist before and during your presentation.
 14. [ ] **Workout History** → old completed days still visible
 15. [ ] **Logout** → back to Login
 
+### Button → backend quick reference
+
+| Screen | Button | Expected |
+|--------|--------|----------|
+| Goal Selection | Select | `selected_goal` saved → Plan Preview |
+| Plan Preview | Start Plan | MySQL goal + workout_days, Day 1 current → Dashboard |
+| Dashboard | Continue Today's Activity | Activity shows current day |
+| Plan Timeline | Start / Continue / Resume Task | Opens Activity for that day |
+| Activity | Start / Stop / Mark as Completed | Timer + complete → unlock next day |
+| Profile | Change Plan | Dialog → replace goal → Change Plan page |
+| Profile | Logout | Session cleared → Login |
+| Goal Completed (Activity) | Change Plan | Dialog (not raw goal-setup) |
+
+Automated backend check: `py scripts/validate_phase9.py` (must pass all tests).
+
 ---
 
 ## Section 3: Admin Demo Flow

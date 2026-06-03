@@ -24,6 +24,7 @@ from controllers.auth_controller import handle_logout
 from services.session_service import get_current_user_name
 from utils.auth_guard import require_user
 from utils.messages import ACCESS_DENIED
+from utils.navigation import go
 
 
 def user_page_layout(page: ft.Page, content: ft.Control, active_route: str, profile_subtitle: str = "Beginner Plan") -> ft.View:
@@ -81,14 +82,15 @@ def _user_sidebar(page: ft.Page, section: str, profile_subtitle: str) -> ft.Cont
                             ft.Text(label, color=PRIMARY_CYAN if active else MUTED_TEXT_COLOR, size=13, weight=ft.FontWeight.W_500),
                         ],
                     ),
-                    on_click=lambda _, k=key: page.go(f"/user/{k}"),
+                    on_click=lambda _, k=key: go(page, f"/user/{k}"),
                 ),
             )
         )
 
     def logout(_: ft.ControlEvent) -> None:
         result = handle_logout(page)
-        page.go(result["data"]["route"])
+        if result.get("success"):
+            go(page, result["data"]["route"])
 
     return ft.Container(
         width=260,

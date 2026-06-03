@@ -6,35 +6,89 @@ from database.connection import get_connection
 
 
 class WorkoutRepository:
+    def _insert_plan_day(self, cur, goal_id: int, day: dict, include_description: bool = True) -> None:
+        status = day.get("status") or ("current" if day.get("is_unlocked") else "locked")
+        unlocked = 1 if day.get("is_unlocked") else 0
+        completed = 1 if day.get("is_completed") else 0
+        selected = 1 if day.get("day_number") == 1 else 0
+        params = (
+            goal_id,
+            day["day_number"],
+            day["title"],
+            day.get("description") or day["main_activity"],
+            day["warmup"],
+            day["main_activity"],
+            day["cooldown"],
+            day["safety_tip"],
+            day["estimated_minutes"],
+            unlocked,
+            completed,
+            status,
+            selected,
+        )
+        if include_description:
+            cur.execute(
+                """
+                INSERT INTO workout_days (
+                    goal_id, day_number, title, description, warmup, main_activity, cooldown,
+                    safety_tip, estimated_minutes, is_unlocked, is_completed, status, selected_as_today
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                params,
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO workout_days (
+                    goal_id, day_number, title, warmup, main_activity, cooldown,
+                    safety_tip, estimated_minutes, is_unlocked, is_completed, status, selected_as_today
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    goal_id,
+                    day["day_number"],
+                    day["title"],
+                    day["warmup"],
+                    day["main_activity"],
+                    day["cooldown"],
+                    day["safety_tip"],
+                    day["estimated_minutes"],
+                    unlocked,
+                    completed,
+                    status,
+                    selected,
+                ),
+            )
+
     def create_workout_days(self, goal_id: int, plan_days: list[dict]) -> None:
         with get_connection() as conn:
             cur = conn.cursor(dictionary=True)
-            for day in plan_days:
-                status = day.get("status") or ("current" if day.get("is_unlocked") else "locked")
-                cur.execute(
-                    """
-                    INSERT INTO workout_days (
-                        goal_id, day_number, title, warmup, main_activity, cooldown, safety_tip,
-                        estimated_minutes, is_unlocked, is_completed, status, selected_as_today
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        goal_id,
-                        day["day_number"],
-                        day["title"],
-                        day["warmup"],
-                        day["main_activity"],
-                        day["cooldown"],
-                        day["safety_tip"],
-                        day["estimated_minutes"],
-                        day["is_unlocked"],
-                        day["is_completed"],
-                        status,
-                        day.get("day_number") == 1,
-                    ),
-                )
-            conn.commit()
+
+            def _insert_all(include_description: bool) -> None:
+                for day in plan_days:
+                    self._insert_plan_day(cur, goal_id, day, include_description=include_description)
+
+            try:
+                _insert_all(include_description=True)
+                conn.commit()
+            except Exception as exc:
+                conn.rollback()
+                if "description" not in str(exc).lower():
+                    raise
+                _insert_all(include_description=False)
+                conn.commit()
+
+    def count_workout_days(self, goal_id: int) -> int:
+        with get_connection() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(
+                "SELECT COUNT(*) AS total FROM workout_days WHERE goal_id = %s",
+                (int(goal_id),),
+            )
+            row = cur.fetchone()
+            return int(row["total"]) if row else 0
 
     def get_workout_days(self, goal_id: int):
         with get_connection() as conn:
@@ -108,6 +162,32 @@ class WorkoutRepository:
                 WHERE id = %s AND is_completed = FALSE
                 """,
                 (datetime.now(), workout_day_id),
+            )
+            conn.commit()
+
+    def mark_day_stopped(self, workout_day_id: int) -> None:
+        with get_connection() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(
+                """
+                UPDATE workout_days
+                SET status = 'stopped'
+                WHERE id = %s AND is_completed = FALSE
+                """,
+                (workout_day_id,),
+            )
+            conn.commit()
+
+    def mark_day_resumed(self, workout_day_id: int) -> None:
+        with get_connection() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(
+                """
+                UPDATE workout_days
+                SET status = 'in_progress'
+                WHERE id = %s AND is_completed = FALSE
+                """,
+                (workout_day_id,),
             )
             conn.commit()
 

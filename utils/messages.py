@@ -15,15 +15,25 @@ SESSION_EXPIRED = "Please log in again."
 PLAN_ERROR = "Unable to update your plan right now. Please try again."
 
 # Plans & activity
-PLAN_READY = "Your beginner fitness plan is ready."
-ACTIVITY_UNLOCKED = "Great job! The next activity is now unlocked."
-NEXT_DAY_UNLOCKED = "Great job! Day {n} is now unlocked."
-PLAN_COMPLETED = "Congratulations! You completed your fitness goal."
-WEEKLY_CONSISTENCY = "You completed your weekly consistency goal."
-CHANGE_PLAN_SAVED = "Your previous progress was saved to history."
+PLAN_READY = "Your BodyQuest plan is ready. Day 1 is now available."
+TASK_STARTED = "Task started. Stay focused."
+TASK_COMPLETED = "Great job! Your task was completed."
+ACTIVITY_UNLOCKED = "The next task is now unlocked."
+NEXT_DAY_UNLOCKED = "The next task is now unlocked."
+PLAN_COMPLETED = "Congratulations! You completed your BodyQuest goal."
+WEEKLY_TASK_PROGRESS = "You completed your weekly task progress."
+WEEKLY_CONSISTENCY = WEEKLY_TASK_PROGRESS
+CHANGE_PLAN_SAVED = "Your previous progress was saved to Workout History."
+CHANGE_PLAN_CONFIRM = (
+    "Changing your plan will replace your active goal. "
+    "Your completed tasks will stay in Workout History."
+)
 
 # User empty states
-NO_ACTIVE_PLAN = "No active plan yet. Choose a fitness goal to get started."
+NO_ACTIVE_PLAN_FOUND = "No active plan found."
+CHOOSE_GOAL_JOURNEY = "Choose a fitness goal to start your BodyQuest journey."
+NO_ACTIVE_PLAN = CHOOSE_GOAL_JOURNEY
+TASK_STOPPED = "Task stopped. You can resume anytime."
 NO_ACHIEVEMENTS = "No achievements yet. Complete your first activity to earn one."
 NO_WORKOUT_HISTORY = "No workout history yet. Complete your first activity to start tracking progress."
 
@@ -34,3 +44,7 @@ NO_WORKOUT_HISTORY_ADMIN = "No workout history available yet."
 NO_ACTIVE_PLANS = "No active fitness plans yet."
 NO_REPORT_DATA = "No report data available yet."
 NO_LEADERBOARD = "Leaderboard will appear after users earn progress and achievements."
+
+
+def day_unlocked_message(day_number: int) -> str:
+    return f"Great job! Day {int(day_number)} is now unlocked."

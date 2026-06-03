@@ -9,12 +9,14 @@ from utils.messages import (
     ACTIVITY_ALREADY_DONE,
     ACTIVITY_ERROR,
     ACTIVITY_LOCKED,
-    NEXT_DAY_UNLOCKED,
     NO_ACTIVE_PLAN,
     PLAN_COMPLETED,
     TASK_LOCKED,
+    TASK_STARTED,
+    TASK_STOPPED,
     TIMER_REQUIRED,
-    WEEKLY_CONSISTENCY,
+    WEEKLY_TASK_PROGRESS,
+    day_unlocked_message,
 )
 
 _goal_repo = GoalRepository()
@@ -25,11 +27,14 @@ _progress_repo = ProgressRepository()
 def resolve_day_status(day: dict) -> str:
     if day.get("is_completed"):
         return "completed"
-    if day.get("started_at") and not day.get("is_completed"):
+    if not day.get("is_unlocked"):
+        return "locked"
+    db_status = str(day.get("status") or "").lower()
+    if db_status == "stopped":
+        return "stopped"
+    if db_status == "in_progress" or day.get("started_at"):
         return "in_progress"
-    if day.get("is_unlocked"):
-        return "current"
-    return str(day.get("status") or "locked")
+    return "current"
 
 
 def add_progress_log(
@@ -94,6 +99,8 @@ def select_timeline_day(user_id: int, goal_id: int, workout_day_id: int, page) -
     current = _workout_repo.get_current_unlocked_day(goal_id)
     if not current or int(current["id"]) != int(workout_day_id):
         return False, TASK_LOCKED, None
+    if status not in ("current", "in_progress", "stopped"):
+        return False, TASK_LOCKED, None
 
     set_session_value(page, "selected_workout_day_id", int(workout_day_id))
     set_session_value(page, "view_workout_day_id", None)
@@ -153,6 +160,108 @@ def start_task_timer(user_id: int, goal_id: int, workout_day_id: int) -> tuple[b
 
     if not day.get("started_at"):
         _workout_repo.mark_day_started(workout_day_id)
+    elif resolve_day_status(day) == "stopped":
+        _workout_repo.mark_day_resumed(workout_day_id)
+    return True, ""
+
+
+def stop_task(user_id: int, goal_id: int, workout_day_id: int) -> tuple[bool, str]:
+    if not _goal_repo.goal_belongs_to_user(goal_id, user_id):
+        return False, "Workout day not found."
+    active_goal = _goal_repo.get_active_goal_for_user(user_id, goal_id)
+    if not active_goal:
+        return False, NO_ACTIVE_PLAN
+
+    day = _workout_repo.get_workout_day(workout_day_id, goal_id)
+    if not day:
+        return False, "Workout day not found."
+    if day.get("is_completed"):
+        return False, ACTIVITY_ALREADY_DONE
+    if not day.get("is_unlocked"):
+        return False, ACTIVITY_LOCKED
+    if not day.get("started_at"):
+        return False, TIMER_REQUIRED
+
+    current = _workout_repo.get_current_unlocked_day(goal_id)
+    if not current or int(current["id"]) != int(workout_day_id):
+        return False, TASK_LOCKED
+
+    status = resolve_day_status(day)
+    if status not in ("in_progress", "stopped"):
+        return False, ACTIVITY_LOCKED
+
+    _workout_repo.mark_day_stopped(workout_day_id)
+    return True, TASK_STOPPED
+
+
+def start_timeline_task(user_id: int, goal_id: int, workout_day_id: int, page) -> tuple[bool, str]:
+    if not _goal_repo.goal_belongs_to_user(goal_id, user_id):
+        return False, "Workout day not found."
+    active_goal = _goal_repo.get_active_goal_for_user(user_id, goal_id)
+    if not active_goal:
+        return False, NO_ACTIVE_PLAN
+
+    day = _workout_repo.get_workout_day(workout_day_id, goal_id)
+    if not day:
+        return False, "Workout day not found."
+    status = resolve_day_status(day)
+    if status == "locked":
+        return False, TASK_LOCKED
+    if status == "completed":
+        return False, ACTIVITY_ALREADY_DONE
+
+    ok, msg, mode = select_timeline_day(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return False, msg
+    if mode == "view":
+        return True, ""
+    if status == "in_progress":
+        return True, ""
+
+    timer_ok, timer_msg = start_task_timer(user_id, goal_id, workout_day_id)
+    if not timer_ok:
+        return False, timer_msg
+    return True, TASK_STARTED
+
+
+def continue_timeline_task(user_id: int, goal_id: int, workout_day_id: int, page) -> tuple[bool, str]:
+    if not _goal_repo.goal_belongs_to_user(goal_id, user_id):
+        return False, "Workout day not found."
+    active_goal = _goal_repo.get_active_goal_for_user(user_id, goal_id)
+    if not active_goal:
+        return False, NO_ACTIVE_PLAN
+
+    day = _workout_repo.get_workout_day(workout_day_id, goal_id)
+    if not day:
+        return False, "Workout day not found."
+    status = resolve_day_status(day)
+    if status != "in_progress":
+        return False, TASK_LOCKED
+    ok, msg, _mode = select_timeline_day(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return False, msg
+    return True, ""
+
+
+def resume_timeline_task(user_id: int, goal_id: int, workout_day_id: int, page) -> tuple[bool, str]:
+    if not _goal_repo.goal_belongs_to_user(goal_id, user_id):
+        return False, "Workout day not found."
+    active_goal = _goal_repo.get_active_goal_for_user(user_id, goal_id)
+    if not active_goal:
+        return False, NO_ACTIVE_PLAN
+
+    day = _workout_repo.get_workout_day(workout_day_id, goal_id)
+    if not day:
+        return False, "Workout day not found."
+    if resolve_day_status(day) != "stopped":
+        return False, TASK_LOCKED
+
+    ok, msg, _mode = select_timeline_day(user_id, goal_id, workout_day_id, page)
+    if not ok:
+        return False, msg
+    timer_ok, timer_msg = start_task_timer(user_id, goal_id, workout_day_id)
+    if not timer_ok:
+        return False, timer_msg
     return True, ""
 
 
@@ -177,6 +286,12 @@ def complete_current_day(
             return False, ACTIVITY_LOCKED, False
         if day["is_completed"]:
             return False, ACTIVITY_ALREADY_DONE, False
+
+        status = resolve_day_status(day)
+        if status == "locked":
+            return False, ACTIVITY_LOCKED, False
+        if status not in ("current", "in_progress", "stopped"):
+            return False, ACTIVITY_LOCKED, False
         if not day.get("started_at"):
             return False, TIMER_REQUIRED, False
 
@@ -198,9 +313,10 @@ def complete_current_day(
 
         check_and_award_achievements(user_id, goal_id)
         completed_after = _workout_repo.get_completed_days_count(goal_id)
-        message = NEXT_DAY_UNLOCKED.format(n=int(next_day["day_number"]))
+        next_num = int(next_day.get("day_number") or 0)
+        message = day_unlocked_message(next_num) if next_num else "Great job! The next task is now unlocked."
         if completed_before < 7 <= completed_after:
-            message = f"{message} {WEEKLY_CONSISTENCY}"
+            message = f"{message} {WEEKLY_TASK_PROGRESS}"
         return True, message, False
     except Exception as exc:
         print(f"[BODYQUEST] complete_current_day error: {exc}")

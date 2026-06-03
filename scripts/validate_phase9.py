@@ -262,7 +262,7 @@ def test_goal_durations() -> None:
 def test_user_flow() -> None:
     from repositories.goal_repository import GoalRepository
     from services.auth_service import create_user, login_user
-    from services.plan_service import get_active_goal, start_new_plan, get_workout_days
+    from services.plan_service import confirm_plan_change, get_active_goal, start_new_plan, get_workout_days
     from services.progress_service import complete_current_day, get_user_workout_history
     from services.achievement_service import achievement_exists, get_user_achievements
 
@@ -316,6 +316,7 @@ def test_user_flow() -> None:
         bad("complete day 2 failed")
 
     old_gid = gid
+    confirm_plan_change(uid)
     gid2 = start_new_plan(uid, "Gain Muscle")
     if int(gid2) != int(old_gid):
         ok("change plan creates new goal")
@@ -345,6 +346,7 @@ def test_user_flow() -> None:
         bad(f"history count {len(history)}")
 
     # Finish a short plan to verify final-day completion
+    confirm_plan_change(uid)
     flex_gid = start_new_plan(uid, "Improve Flexibility")
     plan_done = False
     while not plan_done:
@@ -374,8 +376,14 @@ def test_user_flow() -> None:
 def test_timer_and_timeline() -> None:
     from services.auth_service import create_user, login_user
     from services.plan_service import get_workout_days, start_new_plan
-    from services.progress_service import complete_current_day, select_timeline_day
-    from utils.messages import TASK_LOCKED, TIMER_REQUIRED
+    from services.progress_service import (
+        complete_current_day,
+        continue_timeline_task,
+        select_timeline_day,
+        start_timeline_task,
+        stop_task,
+    )
+    from utils.messages import TASK_LOCKED, TASK_STARTED, TASK_STOPPED, TIMER_REQUIRED
 
     email = f"phase9.timer.{int(time.time())}@gymbro.test"
     _cleanup_test_user(email)
@@ -387,6 +395,11 @@ def test_timer_and_timeline() -> None:
     day1 = days[0]
     locked = [d for d in days if int(d["day_number"]) == 3][0]
     page = MockPage("/user/timeline")
+
+    if day1.get("selected_as_today"):
+        ok("day 1 pre-selected after plan start")
+    else:
+        bad("day 1 not selected after plan start")
 
     ok_timer, msg_timer, _ = complete_current_day(uid, gid, int(day1["id"]))
     if not ok_timer and msg_timer == TIMER_REQUIRED:
@@ -400,7 +413,153 @@ def test_timer_and_timeline() -> None:
     else:
         bad("locked timeline selection allowed")
 
-    _complete_day_with_timer(uid, gid, int(day1["id"]))
+    ok_start, msg_start = start_timeline_task(uid, gid, int(day1["id"]), page)
+    if ok_start and msg_start == TASK_STARTED:
+        ok("start_timeline_task sets task in progress")
+    else:
+        bad(f"start_timeline_task: {msg_start}")
+
+    ok_cont, msg_cont = continue_timeline_task(uid, gid, int(day1["id"]), page)
+    if ok_cont and msg_cont == "":
+        ok("continue_timeline_task opens in-progress day")
+    else:
+        bad(f"continue_timeline_task: {msg_cont}")
+
+    ok_stop, msg_stop = stop_task(uid, gid, int(day1["id"]))
+    if ok_stop and msg_stop == TASK_STOPPED:
+        ok("stop_task sets stopped status")
+    else:
+        bad(f"stop_task: {msg_stop}")
+
+    ok_complete, _, _ = complete_current_day(uid, gid, int(day1["id"]))
+    if ok_complete:
+        ok("complete after start_timeline_task")
+    else:
+        bad("complete after start_timeline_task failed")
+
+    _cleanup_test_user(email)
+
+
+def test_router_active_plan_guards() -> None:
+    from router import route_guard
+    from services.auth_service import create_user, login_user
+    from services.plan_service import start_new_plan
+    from services.session_service import clear_current_user, set_current_user
+
+    email = f"phase9.router.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("Router Tester", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+    uid = int(user["id"])
+    start_new_plan(uid, "Lose Weight")
+
+    page = MockPage("/user/dashboard")
+    set_current_user(page, user)
+
+    if route_guard(page, "/user/goal-setup") == "/user/dashboard":
+        ok("active plan blocks /user/goal-setup")
+    else:
+        bad("goal-setup not blocked with active plan")
+
+    if route_guard(page, "/user/plan-preview") == "/user/dashboard":
+        ok("active plan blocks /user/plan-preview")
+    else:
+        bad("plan-preview not blocked with active plan")
+
+    from services.session_service import set_session_value
+
+    set_session_value(page, "selected_goal", "Gain Muscle")
+    if route_guard(page, "/user/plan-preview") == "/user/dashboard":
+        ok("active plan blocks plan-preview even with selected_goal session")
+    else:
+        bad("plan-preview session bypass")
+
+    clear_current_user(page)
+    _cleanup_test_user(email)
+
+
+def test_router_no_plan_blocks_main_app() -> None:
+    from router import route_guard
+    from services.auth_service import create_user, login_user
+    from services.session_service import clear_current_user, set_current_user, set_session_value
+
+    email = f"phase9.noplan.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("No Plan Router", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+
+    page = MockPage("/user/activity")
+    set_current_user(page, user)
+
+    if route_guard(page, "/user/activity") == "/user/goal-setup":
+        ok("no plan blocks activity -> goal-setup")
+    else:
+        bad(f"activity guard without plan: {page.route}")
+
+    set_session_value(page, "selected_goal", "Lose Weight")
+    page.route = "/user/dashboard"
+    if route_guard(page, "/user/dashboard") == "/user/plan-preview":
+        ok("pending goal redirects dashboard -> plan-preview")
+    else:
+        bad("dashboard not redirected to plan-preview with selected_goal")
+
+    clear_current_user(page)
+    _cleanup_test_user(email)
+
+
+def test_change_plan_guard() -> None:
+    from controllers.goal_controller import handle_change_plan
+    from services.auth_service import create_user, login_user
+    from services.session_service import clear_current_user, set_current_user
+    from utils.messages import NO_ACTIVE_PLAN_FOUND
+
+    email = f"phase9.chg.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("Change Guard", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+
+    page = MockPage("/user/profile")
+    set_current_user(page, user)
+    result = handle_change_plan(page)
+    if result["success"] and result["data"]["route"] == "/user/change-plan":
+        ok("change plan without active goal allows new goal selection")
+    else:
+        bad(f"change plan without active plan: {result}")
+
+    clear_current_user(page)
+    _cleanup_test_user(email)
+
+
+def test_completion_duration_recorded() -> None:
+    from repositories.workout_repository import WorkoutRepository
+    from services.auth_service import create_user, login_user
+    from services.plan_service import get_workout_days, start_new_plan
+    from services.progress_service import complete_current_day, start_task_timer
+
+    email = f"phase9.dur.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("Duration Tester", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+    uid = int(user["id"])
+    gid = start_new_plan(uid, "General Fitness")
+    day1 = get_workout_days(gid)[0]
+    day_id = int(day1["id"])
+
+    start_task_timer(uid, gid, day_id)
+    ok_complete, _, _ = complete_current_day(uid, gid, day_id, 90)
+    if not ok_complete:
+        bad("complete with duration failed")
+        _cleanup_test_user(email)
+        return
+
+    repo = WorkoutRepository()
+    updated = repo.get_workout_day(day_id, gid)
+    duration = int(updated.get("actual_duration_seconds") or 0) if updated else 0
+    if duration >= 90:
+        ok("actual_duration_seconds saved on complete")
+    else:
+        bad(f"duration not saved: {duration}")
+
     _cleanup_test_user(email)
 
 
@@ -608,6 +767,48 @@ def test_regression_demo() -> None:
     _cleanup_test_user(email)
 
 
+def test_onboarding_stale_page_data() -> None:
+    """Empty selected_goal in page.data must not hide value in per-user onboarding store."""
+    from controllers.goal_controller import handle_goal_selection, handle_start_plan
+    from services.auth_service import create_user, login_user
+    from services.session_service import clear_current_user, get_session_value, set_current_user, set_session_value
+
+    email = f"phase9.stale.{int(time.time())}@gymbro.test"
+    _cleanup_test_user(email)
+    create_user("Stale Data", email, "Testpass1")
+    user = login_user(email, "Testpass1")
+    uid = int(user["id"])
+
+    page = MockPage("/user/goal-setup")
+    set_current_user(page, user)
+    sel = handle_goal_selection(page, "Lose Weight")
+    if not sel["success"]:
+        bad(f"goal selection for stale test: {sel}")
+        clear_current_user(page)
+        _cleanup_test_user(email)
+        return
+
+    if isinstance(page.data, dict):
+        page.data["selected_goal"] = ""
+
+    read_back = get_session_value(page, "selected_goal", "")
+    if read_back != "Lose Weight":
+        bad(f"onboarding store lost goal after stale page.data: {read_back!r}")
+        clear_current_user(page)
+        _cleanup_test_user(email)
+        return
+    ok("onboarding store wins over stale empty page.data")
+
+    start = handle_start_plan(page)
+    if start["success"] and start["data"].get("route") == "/user/dashboard":
+        ok("start plan works with stale page.data cleared via onboarding read")
+    else:
+        bad(f"start plan with stale page.data: {start}")
+
+    clear_current_user(page)
+    _cleanup_test_user(email)
+
+
 def test_duplicate_signup() -> None:
     from services.auth_service import create_user
 
@@ -640,6 +841,16 @@ def main() -> int:
     test_user_flow()
     print("\n[7b] Timer and timeline")
     test_timer_and_timeline()
+    print("\n[7c] Router active-plan guards")
+    test_router_active_plan_guards()
+    print("\n[7c2] Router no-plan blocks main app")
+    test_router_no_plan_blocks_main_app()
+    print("\n[7d] Change plan guard")
+    test_change_plan_guard()
+    print("\n[7e] Completion duration")
+    test_completion_duration_recorded()
+    print("\n[7f] Onboarding stale page.data")
+    test_onboarding_stale_page_data()
     print("\n[8] Admin stats")
     test_admin_stats()
     print("\n[9] Duplicate signup")

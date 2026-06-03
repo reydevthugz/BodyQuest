@@ -22,6 +22,8 @@ def main(page: ft.Page) -> None:
         "Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
     }
     page.theme = ft.Theme(font_family="Inter")
+    if not isinstance(getattr(page, "data", None), dict):
+        page.data = {}
     seed_default_admin()
 
     if get_current_user_id(page) is None:

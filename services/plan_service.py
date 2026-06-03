@@ -33,11 +33,12 @@ def generate_plan_days(goal_type: str, duration: int):
             {
                 "day_number": day,
                 "title": tpl[0],
-                "warmup": tpl[1],
-                "main_activity": tpl[2],
-                "cooldown": tpl[3],
-                "safety_tip": tpl[4],
-                "estimated_minutes": tpl[5],
+                "description": tpl[1],
+                "warmup": tpl[2],
+                "main_activity": tpl[3],
+                "cooldown": tpl[4],
+                "safety_tip": tpl[5],
+                "estimated_minutes": tpl[6],
                 "is_unlocked": day == 1,
                 "is_completed": False,
                 "status": "current" if day == 1 else "locked",
@@ -46,13 +47,27 @@ def generate_plan_days(goal_type: str, duration: int):
     return result
 
 
+def clear_incomplete_active_goal(user_id: int) -> None:
+    """Remove broken active goals that have no workout_days (failed prior start)."""
+    active = _goal_repo.get_active_goal(user_id)
+    if not active:
+        return
+    if _workout_repo.count_workout_days(int(active["id"])) == 0:
+        _goal_repo.mark_active_goal_replaced(user_id)
+
+
 def create_new_goal_plan(user_id: int, goal_type: str) -> int:
     if not is_allowed_goal_type(goal_type):
         raise ValueError("Invalid goal type.")
+    clear_incomplete_active_goal(user_id)
     duration = get_goal_duration(goal_type)
     plan_days = generate_plan_days(goal_type, duration)
     goal_id = _goal_repo.create_goal(user_id, goal_type, duration)
-    _workout_repo.create_workout_days(goal_id, plan_days)
+    try:
+        _workout_repo.create_workout_days(goal_id, plan_days)
+    except Exception:
+        _goal_repo.mark_active_goal_replaced(user_id)
+        raise
     return goal_id
 
 
@@ -95,25 +110,32 @@ def replace_active_goal(user_id: int) -> int:
     return _goal_repo.mark_active_goal_replaced(user_id)
 
 
+def confirm_plan_change(user_id: int) -> bool:
+    active = get_active_goal(user_id)
+    if not active:
+        return False
+    replace_active_goal(user_id)
+    award_achievement(
+        user_id=user_id,
+        goal_id=None,
+        name="Plan Switcher",
+        description="Replaced an active plan with a new beginner plan.",
+        badge_type="switch",
+    )
+    add_progress_log(user_id, int(active["id"]), None, "replaced_plan")
+    return True
+
+
 def start_new_plan(user_id: int, goal_type: str) -> int:
     if not is_allowed_goal_type(goal_type):
         raise ValueError("Invalid goal type.")
-    had_active = get_active_goal(user_id) is not None
-    if had_active:
-        replace_active_goal(user_id)
-        award_achievement(
-            user_id=user_id,
-            goal_id=None,
-            name="Plan Switcher",
-            description="Replaced an active plan with a new beginner plan.",
-            badge_type="switch",
-        )
+    clear_incomplete_active_goal(user_id)
+    if get_active_goal(user_id):
+        raise ValueError("Active plan exists. Use change plan before starting a new one.")
     goal_id = create_new_goal_plan(user_id, goal_type)
     add_progress_log(user_id, goal_id, None, "started_plan")
-    if goal_type in ("Lose Weight", "Improve Endurance"):
-        award_achievement(user_id, goal_id, "Cardio Starter", "Started a cardio-focused beginner plan.", "cardio")
-    if goal_type == "Gain Muscle":
-        award_achievement(user_id, goal_id, "Strength Beginner", "Started a muscle-focused beginner plan.", "strength")
-    if goal_type == "Improve Flexibility":
-        award_achievement(user_id, goal_id, "Flexibility Builder", "Started a flexibility-focused beginner plan.", "flexibility")
+    day1 = _workout_repo.get_current_unlocked_day(goal_id)
+    if not day1:
+        raise RuntimeError("Day 1 was not created correctly. Please try Start Plan again.")
+    _workout_repo.set_selected_day(goal_id, int(day1["id"]))
     return goal_id

@@ -23,17 +23,10 @@ def primary_button(label: str, icon: str | None = None, on_click=None, width: in
 
 
 def neon_button(label: str, icon: str | None = None, on_click=None, width: int | None = None) -> ft.ElevatedButton:
-    content = ft.Row(
-        alignment=ft.MainAxisAlignment.CENTER,
-        tight=True,
-        spacing=8,
-        controls=[
-            ft.Icon(icon, size=18, color=BUTTON_TEXT_ON_PRIMARY) if icon else ft.Container(),
-            ft.Text(label, color=BUTTON_TEXT_ON_PRIMARY),
-        ],
-    )
     return ft.ElevatedButton(
-        content=content,
+        content=ft.Text(label, color=BUTTON_TEXT_ON_PRIMARY, weight=ft.FontWeight.W_600),
+        icon=icon,
+        icon_color=BUTTON_TEXT_ON_PRIMARY,
         on_click=on_click,
         width=width,
         style=primary_button_style(),

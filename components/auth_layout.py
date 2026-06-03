@@ -52,6 +52,43 @@ def auth_shell(page: ft.Page, title: str, subtitle: str, form: ft.Control, *, sh
             ),
         )
 
+    form_panel = ft.Column(
+        expand=True,
+        scroll=ft.ScrollMode.AUTO,
+        spacing=20,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            brand_header(28),
+            ft.Container(
+                **role_badge_style(),
+                content=ft.Text("Public Access", color=PRIMARY_CYAN, size=10, weight=ft.FontWeight.BOLD),
+            ),
+            ft.Column(
+                spacing=6,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Text(title, color=TEXT_CYAN, size=30, weight=ft.FontWeight.BOLD),
+                    ft.Text(subtitle, color=MUTED_TEXT_COLOR, size=14),
+                ],
+            ),
+            glass_card(form, padding=24),
+            ft.Container(
+                border=ft.Border(
+                    top=ft.BorderSide(1, SECONDARY_COLOR),
+                    right=ft.BorderSide(0, TRANSPARENT),
+                    bottom=ft.BorderSide(0, TRANSPARENT),
+                    left=ft.BorderSide(0, TRANSPARENT),
+                ),
+                padding=ft.Padding(10, 8, 10, 8),
+                content=ft.Text(
+                    "Secure, stylish and cyan-branded authentication pages.",
+                    color=MUTED_TEXT_COLOR,
+                    size=11,
+                ),
+            ),
+        ],
+    )
+
     return ft.View(
         route=page.route,
         controls=[
@@ -63,41 +100,21 @@ def auth_shell(page: ft.Page, title: str, subtitle: str, form: ft.Control, *, sh
                     ft.SafeArea(
                         expand=True,
                         content=ft.Container(
+                            expand=True,
                             padding=PAGE_PADDING,
                             content=ft.ResponsiveRow(
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                                expand=True,
+                                vertical_alignment=ft.CrossAxisAlignment.START,
                                 controls=[
                                     hero or ft.Container(),
                                     ft.Container(
+                                        expand=True,
                                         col={"md": 6 if show_hero else 12},
                                         alignment=ft.Alignment(0, 0),
                                         content=ft.Container(
+                                            expand=True,
                                             width=470,
-                                            content=ft.Column(
-                                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                                spacing=20,
-                                                controls=[
-                                                    brand_header(28),
-                                                    ft.Container(
-                                                        **role_badge_style(),
-                                                        content=ft.Text("Public Access", color=PRIMARY_CYAN, size=10, weight=ft.FontWeight.BOLD),
-                                                    ),
-                                                    ft.Column(
-                                                        spacing=6,
-                                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                                        controls=[
-                                                            ft.Text(title, color=TEXT_CYAN, size=30, weight=ft.FontWeight.BOLD),
-                                                            ft.Text(subtitle, color=MUTED_TEXT_COLOR, size=14),
-                                                        ],
-                                                    ),
-                                                    glass_card(form, padding=24),
-                                                    ft.Container(
-                                                        border=ft.Border(top=ft.BorderSide(1, SECONDARY_COLOR), right=ft.BorderSide(0, TRANSPARENT), bottom=ft.BorderSide(0, TRANSPARENT), left=ft.BorderSide(0, TRANSPARENT)),
-                                                        padding=ft.Padding(10, 8, 10, 8),
-                                                        content=ft.Text("Secure, stylish and cyan-branded authentication pages.", color=MUTED_TEXT_COLOR, size=11),
-                                                    ),
-                                                ],
-                                            ),
+                                            content=form_panel,
                                         ),
                                     ),
                                 ],

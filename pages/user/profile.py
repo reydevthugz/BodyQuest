@@ -6,13 +6,14 @@ from pages.user.common import show_change_plan_dialog, user_shell
 from controllers.auth_controller import handle_logout
 from controllers.user_controller import get_profile_summary
 from services.session_service import get_current_user, get_current_user_id
+from utils.navigation import go
 
 
 def profile_view(page: ft.Page) -> ft.View:
     user_id = get_current_user_id(page)
     user = get_current_user(page) or {}
     if not user_id:
-        page.go("/login")
+        go(page, "/login")
         return user_shell(page, "profile", glass_card(ft.Text("Please log in to continue.", color=MUTED_TEXT_COLOR)), "Profile")
 
     summary = get_profile_summary(user_id)
@@ -21,6 +22,15 @@ def profile_view(page: ft.Page) -> ft.View:
     progress = summary["progress_percent"]
     achievement_count = summary["achievement_count"]
     workout_count = summary["workout_count"]
+
+    def logout(_: ft.ControlEvent) -> None:
+        result = handle_logout(page)
+        if not result.get("success"):
+            page.snack_bar = ft.SnackBar(ft.Text(result.get("message") or "Logout failed."))
+            page.snack_bar.open = True
+            page.update()
+            return
+        go(page, result["data"]["route"])
 
     content = ft.Column(
         spacing=16,
@@ -47,11 +57,7 @@ def profile_view(page: ft.Page) -> ft.View:
                 spacing=10,
                 controls=[
                     soft_button("Change Plan", ft.Icons.SYNC, lambda _: show_change_plan_dialog(page)),
-                    soft_button(
-                        "Logout",
-                        ft.Icons.LOGOUT,
-                        lambda _: page.go(handle_logout(page)["data"]["route"]),
-                    ),
+                    soft_button("Logout", ft.Icons.LOGOUT, logout),
                 ],
             ),
         ],

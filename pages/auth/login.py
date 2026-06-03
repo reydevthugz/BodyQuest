@@ -5,6 +5,7 @@ from components.buttons import link_button, neon_button
 from components.theme import ERROR_TEXT_COLOR, MUTED_TEXT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR, auth_text_field, feedback_text, info_panel
 from config.settings import DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD
 from controllers.auth_controller import handle_login
+from utils.navigation import go
 
 
 def login_view(page: ft.Page) -> ft.View:
@@ -24,15 +25,19 @@ def login_view(page: ft.Page) -> ft.View:
         accent=SECONDARY_COLOR,
     )
 
-    def submit(_: ft.ControlEvent) -> None:
+    def submit(_: ft.ControlEvent | None = None) -> None:
         result = handle_login(page, email_field.value or "", password_field.value or "")
         if not result["success"]:
             msg = result["message"] or (result["errors"][0] if result["errors"] else "Login failed.")
             info_text.value = msg
             info_text.color = ERROR_TEXT_COLOR
+            page.snack_bar = ft.SnackBar(ft.Text(msg))
+            page.snack_bar.open = True
             page.update()
             return
-        page.go(result["data"]["route"])
+        go(page, result["data"]["route"])
+
+    password_field.on_submit = submit
 
     form = ft.Column(
         spacing=18,
@@ -42,8 +47,8 @@ def login_view(page: ft.Page) -> ft.View:
             neon_button("Login", ft.Icons.ARROW_FORWARD_ROUNDED, submit, width=420),
             admin_note,
             info_text,
-            link_button("No account yet? Sign up", lambda _: page.go("/signup")),
-            link_button("Back to Home", lambda _: page.go("/"), muted=True),
+            link_button("No account yet? Sign up", lambda _: go(page, "/signup")),
+            link_button("Back to Home", lambda _: go(page, "/"), muted=True),
         ],
     )
     return auth_shell(page, "Welcome to BodyQuest", "Continue your progress today.", form)

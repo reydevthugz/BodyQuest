@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 _MEMORY_STORE: dict[str, dict[str, Any]] = {}
+_ONBOARDING_BY_USER: dict[int, dict[str, Any]] = {}
 
 _SESSION_KEYS = ("user_id", "user_role", "user_name", "user_email")
+_ONBOARDING_KEYS = frozenset({"selected_goal", "changing_plan"})
 _SENSITIVE_KEYS = frozenset({"password", "password_hash", "password_salt"})
 
 
@@ -18,6 +20,54 @@ def _memory_get_store(page) -> dict[str, Any]:
     if key not in _MEMORY_STORE:
         _MEMORY_STORE[key] = {}
     return _MEMORY_STORE[key]
+
+
+def _ensure_page_data(page) -> dict[str, Any]:
+    if not isinstance(getattr(page, "data", None), dict):
+        page.data = {}
+    return page.data
+
+
+def _onboarding_user_id(page, key: str, value: Any | None = None) -> int | None:
+    if key == "user_id" and value is not None:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+    raw = None
+    store = _ensure_page_data(page)
+    if "user_id" in store:
+        raw = store["user_id"]
+    elif key != "user_id":
+        mem = _memory_get_store(page)
+        raw = mem.get("user_id")
+    if raw is None:
+        raw = _get_via_session(page, "user_id", None)
+    try:
+        return int(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _set_onboarding_for_user(user_id: int | None, key: str, value: Any) -> None:
+    if user_id is None or key not in _ONBOARDING_KEYS:
+        return
+    bucket = _ONBOARDING_BY_USER.setdefault(int(user_id), {})
+    if value is None or value == "":
+        bucket.pop(key, None)
+        if not bucket:
+            _ONBOARDING_BY_USER.pop(int(user_id), None)
+    else:
+        bucket[key] = value
+
+
+def _get_onboarding_for_user(user_id: int | None, key: str, default: Any = None) -> Any:
+    if user_id is None or key not in _ONBOARDING_KEYS:
+        return default
+    bucket = _ONBOARDING_BY_USER.get(int(user_id), {})
+    if key in bucket:
+        return bucket[key]
+    return default
 
 
 def _set_via_session(page, key: str, value: Any) -> bool:
@@ -43,33 +93,48 @@ def _get_via_session(page, key: str, default: Any = None) -> Any:
 
 
 def set_session_value(page, key: str, value: Any) -> None:
+    """Persist to Flet session (if any), page.data, memory, and user onboarding store."""
     if key in _SENSITIVE_KEYS:
         return
-    if _set_via_session(page, key, value):
-        return
-    if hasattr(page, "data"):
-        store = page.data if isinstance(page.data, dict) else {}
-        store[key] = value
-        page.data = store
-        return
+    _set_via_session(page, key, value)
+    store = _ensure_page_data(page)
+    store[key] = value
     _memory_get_store(page)[key] = value
+    uid = _onboarding_user_id(page, key, value)
+    _set_onboarding_for_user(uid, key, value)
 
 
 def get_session_value(page, key: str, default: Any = None) -> Any:
+    """Read user onboarding store, page.data, memory, then Flet session."""
+    uid = _onboarding_user_id(page, key)
+    if key in _ONBOARDING_KEYS:
+        bucket = _ONBOARDING_BY_USER.get(int(uid), {}) if uid is not None else {}
+        if key in bucket:
+            return bucket[key]
+    if hasattr(page, "data") and isinstance(page.data, dict) and key in page.data:
+        val = page.data[key]
+        if key not in _ONBOARDING_KEYS or (val is not None and val != ""):
+            return val
+    mem = _memory_get_store(page)
+    if key in mem:
+        return mem[key]
     session_value = _get_via_session(page, key, None)
     if session_value is not None:
         return session_value
-    if hasattr(page, "data") and isinstance(page.data, dict):
-        data_value = page.data.get(key, None)
-        if data_value is not None:
-            return data_value
-    return _memory_get_store(page).get(key, default)
+    return default
 
 
 def clear_session(page) -> None:
+    uid = _onboarding_user_id(page, "user_id")
     for key in _SESSION_KEYS:
         set_session_value(page, key, None)
+    if uid is not None:
+        _ONBOARDING_BY_USER.pop(int(uid), None)
     _memory_get_store(page).clear()
+    if isinstance(getattr(page, "data", None), dict):
+        for key in list(page.data.keys()):
+            if key not in ("user_id", "user_role", "user_name", "user_email"):
+                del page.data[key]
 
 
 def get_current_user_id(page) -> int | None:

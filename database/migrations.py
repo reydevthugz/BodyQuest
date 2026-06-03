@@ -20,8 +20,14 @@ def _column_exists(cur, table: str, column: str) -> bool:
 
 
 def _add_column_if_missing(cur, table: str, column: str, definition: str) -> None:
-    if not _column_exists(cur, table, column):
+    if _column_exists(cur, table, column):
+        return
+    try:
         cur.execute(f"ALTER TABLE `{table}` ADD COLUMN {column} {definition}")
+    except Error as exc:
+        # MySQL 1060: column already exists (schema drift / partial migration).
+        if getattr(exc, "errno", None) != 1060:
+            raise
 
 
 def _ensure_user_password_columns(cur) -> None:
@@ -30,6 +36,7 @@ def _ensure_user_password_columns(cur) -> None:
 
 
 def _ensure_workout_day_columns(cur) -> None:
+    _add_column_if_missing(cur, "workout_days", "description", "TEXT NULL")
     _add_column_if_missing(cur, "workout_days", "status", "VARCHAR(50) DEFAULT 'locked'")
     _add_column_if_missing(cur, "workout_days", "started_at", "DATETIME NULL")
     _add_column_if_missing(cur, "workout_days", "actual_duration_seconds", "INT DEFAULT 0")

@@ -3,8 +3,8 @@ import flet as ft
 # User sidebar — main navigation only (goal setup / plan preview / change plan via flow, not nav)
 USER_NAV_ITEMS = [
     ("dashboard", "Dashboard", ft.Icons.DASHBOARD_ROUNDED),
-    ("activity", "Today's Activity", ft.Icons.DIRECTIONS_RUN),
     ("timeline", "Plan Timeline", ft.Icons.CALENDAR_MONTH),
+    ("activity", "Today's Activity", ft.Icons.DIRECTIONS_RUN),
     ("achievements", "My Achievements", ft.Icons.MILITARY_TECH),
     ("history", "Workout History", ft.Icons.HISTORY),
     ("profile", "Profile", ft.Icons.PERSON),

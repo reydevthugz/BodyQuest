@@ -2,11 +2,12 @@ import flet as ft
 
 from components.cards import glass_card, list_row, status_badge
 from components.theme import MUTED_TEXT_COLOR, TEXT_COLOR
+from controllers.progress_controller import get_workout_history_data
 from pages.user.common import user_shell
-from services.progress_service import get_user_workout_history
 from utils.messages import NO_WORKOUT_HISTORY
 from services.session_service import get_current_user_id
 from utils.date_utils import format_date, format_datetime
+from utils.navigation import go
 
 
 def _status_label(status: str) -> str:
@@ -37,10 +38,10 @@ def _format_duration(seconds: int | None) -> str:
 def history_view(page: ft.Page) -> ft.View:
     user_id = get_current_user_id(page)
     if not user_id:
-        page.go("/login")
+        go(page, "/login")
         return user_shell(page, "history", glass_card(ft.Text("Please log in to continue.", color=MUTED_TEXT_COLOR)))
 
-    history = get_user_workout_history(user_id)
+    history = get_workout_history_data(user_id)["history"]
     if not history:
         content = glass_card(
             ft.Column(

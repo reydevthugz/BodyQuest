@@ -1,3 +1,4 @@
+
 import traceback
 
 from pages.admin import admin_view
@@ -5,11 +6,22 @@ from pages.auth import landing_view, login_view, not_found_view, signup_view
 from pages.auth.error import error_view
 from pages.user import user_view
 from services.plan_service import get_active_goal
-from services.session_service import get_current_user_id, get_current_user_role, is_logged_in, set_session_value
+from services.session_service import get_current_user_id, get_current_user_role, get_session_value, is_logged_in, set_session_value
 from utils.route_utils import ADMIN_ROUTES, PUBLIC_ROUTES, USER_ROUTES, is_known_route, normalize_route
 
 LANDING_ROUTES = {"/", "/landing"}
 AUTH_ENTRY_ROUTES = LANDING_ROUTES | {"/login", "/signup"}
+
+ONBOARDING_ROUTES = {"/user/goal-setup", "/user/change-plan", "/user/plan-preview"}
+
+MAIN_APP_ROUTES = {
+    "/user/dashboard",
+    "/user/timeline",
+    "/user/activity",
+    "/user/achievements",
+    "/user/history",
+    "/user/profile",
+}
 
 
 def route_guard(page, route: str) -> str:
@@ -42,10 +54,34 @@ def route_guard(page, route: str) -> str:
             set_session_value(page, "flash_message", "You do not have permission to access this page.")
             return "/admin/dashboard"
 
-    if role == "user" and route == "/user/dashboard":
+    if role == "user":
         user_id = get_current_user_id(page)
-        if user_id and not get_active_goal(user_id):
-            return "/user/goal-setup"
+        if user_id:
+            active_goal = get_active_goal(user_id)
+            pending_goal = str(get_session_value(page, "selected_goal", "") or "").strip()
+            changing_plan = bool(get_session_value(page, "changing_plan", False))
+
+            if not active_goal:
+                if route in MAIN_APP_ROUTES:
+                    if pending_goal:
+                        set_session_value(
+                            page,
+                            "flash_message",
+                            "Click Start Plan on Plan Preview to activate Day 1 and unlock the main app.",
+                        )
+                        return "/user/plan-preview"
+                    return "/user/goal-setup"
+                if route in ONBOARDING_ROUTES:
+                    if route == "/user/plan-preview" and not pending_goal and not changing_plan:
+                        return "/user/goal-setup"
+                    return route
+
+            if active_goal:
+                if route in ("/user/goal-setup", "/user/plan-preview") and not changing_plan:
+                    return "/user/dashboard"
+                if route == "/user/change-plan" and not changing_plan:
+                    return "/user/dashboard"
+                return route
 
     return route
 

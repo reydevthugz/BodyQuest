@@ -89,8 +89,13 @@ page_background = get_page_bg
 
 
 def ambient_orbs() -> list[ft.Control]:
+    def _orb(**kwargs) -> ft.Control:
+        if hasattr(ft, "IgnorePointer"):
+            return ft.IgnorePointer(content=ft.Container(**kwargs))
+        return ft.Container(**kwargs)
+
     return [
-        ft.Container(
+        _orb(
             width=440,
             height=440,
             right=-150,
@@ -99,7 +104,7 @@ def ambient_orbs() -> list[ft.Control]:
             bgcolor=GLOW_CYAN,
             blur=48,
         ),
-        ft.Container(
+        _orb(
             width=380,
             height=380,
             left=-130,

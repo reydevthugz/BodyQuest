@@ -7,12 +7,13 @@ from controllers.achievement_controller import get_user_achievements_data
 from utils.messages import NO_ACHIEVEMENTS
 from services.session_service import get_current_user_id
 from utils.date_utils import format_date
+from utils.navigation import go
 
 
 def achievements_view(page: ft.Page) -> ft.View:
     user_id = get_current_user_id(page)
     if not user_id:
-        page.go("/login")
+        go(page, "/login")
         return user_shell(page, "achievements", glass_card(ft.Text("Please log in to continue.", color=MUTED_TEXT_COLOR)))
 
     items = get_user_achievements_data(user_id)
